@@ -1,12 +1,19 @@
 import serial
+import random
 
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 
 CHARACTER_HEIGHT = 0.1
 CHARACTER_WIDTH = 0.3
+ENEMY_WIDTH = 0.1
+ENEMY_HEIGHT = 0.1
+MAX_NUM_ENEMIES = 3
+SPEED = 0.01
 
 sensor = serial.Serial('/dev/ttyACM0', 9600, timeout=None)
+# (x, y) coordinates
+enemyPositions = []
 
 def readFromSensor():
     LOWER_VALUE = 100.0
@@ -33,7 +40,22 @@ def drawRect(top, left, height, width):
     glEnd()
 
 def gameLoop():
+    # Update player position.
     playerPosition = readFromSensor()
+
+    # Update enemies position.
+    for pos in enemyPositions:
+        pos[0] -= SPEED
+
+    # Remove hidden enemies.
+    for i, pos in enumerate(enemyPositions):
+        if pos[0] < -ENEMY_WIDTH:
+            del enemyPositions[i]
+            break
+
+    # Create new enemies.
+    if len(enemyPositions) < MAX_NUM_ENEMIES and random.randint(0, 20) == 0:
+        enemyPositions.append([1.0, random.random()])
 
     # Drawing.
     glClear(GL_COLOR_BUFFER_BIT)
@@ -42,10 +64,15 @@ def gameLoop():
     glColor3ub(60, 130, 200)
     drawRect(playerPosition, 0, CHARACTER_HEIGHT, CHARACTER_WIDTH)
 
+    # Draw enemies.
+    glColor3ub(200, 30, 60)
+    for pos in enemyPositions:
+        drawRect(pos[1], pos[0], ENEMY_HEIGHT, ENEMY_WIDTH)
+
     glutSwapBuffers()
 
 glutInit()
-glutInitWindowSize(200, 200)
+glutInitWindowSize(500, 500)
 glutInitWindowPosition(0, 0)
 glutCreateWindow("arcade")
 
