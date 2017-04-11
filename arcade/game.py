@@ -3,6 +3,9 @@ import serial
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 
+CHARACTER_HEIGHT = 0.1
+CHARACTER_WIDTH = 0.3
+
 sensor = serial.Serial('/dev/ttyACM0', 9600, timeout=None)
 
 def readFromSensor():
@@ -21,18 +24,23 @@ def readFromSensor():
     # Map to [0, 1].
     return (value - LOWER_VALUE) / (UPPER_VALUE - LOWER_VALUE)
 
-def gameLoop():
-    print readFromSensor()
+def drawRect(top, left, height, width):
+    glBegin(GL_QUADS)
+    glVertex2f(left, top)
+    glVertex2f(left, top - height)
+    glVertex2f(left + width, top - height)
+    glVertex2f(left + width, top)
+    glEnd()
 
-def display():
+def gameLoop():
+    playerPosition = readFromSensor()
+
+    # Drawing.
     glClear(GL_COLOR_BUFFER_BIT)
 
-    glColor3ub(180, 30, 125)
-    glBegin(GL_TRIANGLES)
-    glVertex2f(0.0, 0.5)
-    glVertex2f(-0.5, -0.5)
-    glVertex2f(0.5, -0.5)
-    glEnd()
+    # Draw character.
+    glColor3ub(60, 130, 200)
+    drawRect(playerPosition, 0, CHARACTER_HEIGHT, CHARACTER_WIDTH)
 
     glutSwapBuffers()
 
@@ -41,7 +49,8 @@ glutInitWindowSize(200, 200)
 glutInitWindowPosition(0, 0)
 glutCreateWindow("arcade")
 
-glutDisplayFunc(display)
+glOrtho(0, 1, -CHARACTER_HEIGHT, 1, 0, 1)
+
 glutIdleFunc(gameLoop)
 
 glutMainLoop()
